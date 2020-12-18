@@ -1,19 +1,61 @@
+import Axios from "axios";
 import React, { Component } from "react";
 
 class FormAdd extends Component {
   state = {
     title: "",
     price: "",
-    Tags: "",
-    Quantity: "",
+    tags: "",
+    quantity: "",
   };
 
   onFormInputHandler = (event) => {
     this.setState({ [event.target.id]: event.target.value });
   };
 
+  componentDidUpdate(prevState, prevProps) {
+    if (prevProps.productid !== this.props.productid) {
+      Axios.get(
+        "http://localhost:4000/productList/" + this.props.productid
+      ).then((res) => {
+        this.setState({
+          title: res.data.title,
+          price: res.data.price,
+          tags: res.data.tags,
+          quantity: res.data.quantity,
+        });
+      });
+    }
+  }
   onSubmitHandler = () => {
-    this.props.addProduct(this.state);
+    // this.props.addProduct(this.state);
+    const data = this.state;
+    if (this.props.productid === "") {
+      Axios.post("http://localhost:4000/productList", data).then((res) => {
+        if (res.status === 201) {
+          this.setState(
+            { title: "", price: "", tags: "", quantity: "" },
+            () => {
+              this.props.getallData();
+            }
+          );
+        }
+      });
+    } else {
+      Axios.patch(
+        "http://localhost:4000/productList/" + this.props.productid,
+        data
+      ).then((res) => {
+        if (res.status === 201) {
+          this.setState(
+            { title: "", price: "", tags: "", quantity: "" },
+            () => {
+              this.props.getallData();
+            }
+          );
+        }
+      });
+    }
   };
   render() {
     return (
@@ -49,8 +91,8 @@ class FormAdd extends Component {
           <input
             type="text"
             className="form-control"
-            id="Tags"
-            value={this.state.Tags}
+            id="tags"
+            value={this.state.tags}
             onChange={this.onFormInputHandler}
           />
         </div>
@@ -61,14 +103,16 @@ class FormAdd extends Component {
           <input
             type="text"
             className="form-control"
-            id="Quantity"
-            value={this.state.Quantity}
+            id="quantity"
+            value={this.state.quantity}
             onChange={this.onFormInputHandler}
           />
         </div>
-        <button className="btn btn-primary" onClick={this.onSubmitHandler}>
-          Submit
-        </button>
+        {this.props.actiontype !== "view" ? (
+          <button className="btn btn-primary" onClick={this.onSubmitHandler}>
+            Submit
+          </button>
+        ) : null}
       </div>
     );
   }
